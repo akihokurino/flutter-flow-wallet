@@ -1,8 +1,14 @@
 MAKEFLAGS=--no-builtin-rules --no-builtin-variables --always-make
 ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
+init-flow-emulator:
+	cd flow-emulator && flow init
+
 run-flow-emulator:
 	cd flow-emulator && flow emulator
+
+generate-flow-keys:
+	cd flow-emulator && flow keys generate
 
 reset-flow-emulator:
 	cd flow-emulator && flow init --reset

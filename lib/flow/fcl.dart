@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:convert/convert.dart';
 import 'package:elliptic/elliptic.dart' as el;
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_flow_wallet/flow/crypto.dart';
 import 'package:flutter_flow_wallet/flow/encode.dart';
 import 'package:flutter_flow_wallet/flow/generated/access/access.pbgrpc.dart';
@@ -68,6 +69,7 @@ class FlowClient {
     final account = (await getAccount(address)).account;
     const keyId = 0;
     final sequenceNumber = account.keys[keyId].sequenceNumber;
+    debugPrint("sequenceNumber: $sequenceNumber");
 
     final proposalKey = Transaction_ProposalKey(
         address: executorAddress,

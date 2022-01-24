@@ -46,7 +46,7 @@ func main() {
 	fmt.Printf("default account Contracts: %d\n", len(defaultAccount.Contracts))
 	fmt.Printf("default account Keys: %d\n", len(defaultAccount.Keys))
 
-	defaultPrivateKey, err := crypto.DecodePrivateKeyHex(crypto.ECDSA_P256, "0bb993fd6e558794d373ad9c629b9a7a176ae0d437e9b227103af34d95454e70")
+	defaultPrivateKey, err := crypto.DecodePrivateKeyHex(crypto.ECDSA_P256, "a0b6509054e06924fc1b9052676e7adbdda3f12fae20e8fa7f11d0bd162ab0d7")
 	if err != nil {
 		panic(err)
 	}
