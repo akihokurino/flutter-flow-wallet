@@ -44,6 +44,11 @@ class FlowClient {
     return accessClient.getAccountAtLatestBlock(request);
   }
 
+  Future<String> getAccountBalance(String address) async {
+    final account = (await getAccount(address)).account;
+    return "${account.balance}";
+  }
+
   Future<BlockResponse> getLatestBlock(bool isSealed) {
     return accessClient
         .getLatestBlock(GetLatestBlockRequest(isSealed: isSealed));
