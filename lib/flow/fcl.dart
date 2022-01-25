@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:convert/convert.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_flow_wallet/flow/crypto.dart';
 import 'package:flutter_flow_wallet/flow/encode.dart';
 import 'package:flutter_flow_wallet/flow/generated/access/access.pbgrpc.dart';
@@ -68,7 +67,6 @@ class FlowClient {
     final account = (await getAccount(address)).account;
     const keyId = 0;
     final sequenceNumber = account.keys[keyId].sequenceNumber;
-    debugPrint("sequenceNumber: $sequenceNumber");
 
     final proposalKey = Transaction_ProposalKey(
         address: executorAddress,
@@ -124,13 +122,16 @@ class FlowClient {
     print("公開鍵");
     print(newPublicKey);
 
-    // FIXME: ここがgoで違う
+    // FIXME: ここがgo-sdkと違ってしまう
+    // ECDSAの鍵を作ってそれで公開鍵を用意し、署名していく必要がある
     print("公開鍵エンコード");
     print(utf8.encode(newPublicKey));
 
+    // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
     print("アカウントキーRLPエンコード");
     print(newAccountKey.rlpEncode());
 
+    // go-sdkと一致するのでRLPエンコード自体に問題はなさそう
     print("アカウントキーRLPエンコード（ハードコード確認）");
     print(Rlp.encode([
       "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd",
@@ -139,9 +140,11 @@ class FlowClient {
       1000
     ]));
 
+    // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
     print("アカウントキーエンコード");
     print(hex.encode(newAccountKey.rlpEncode()));
 
+    // go-sdkと一致するのでhexエンコード自体に問題はなさそう
     print("アカウントキーエンコード（ハードコード確認）");
     print(hex.encode(const [248, 137, 248, 130, 48, 120, 102, 52, 52, 99]));
     print("-----------------------------------");
