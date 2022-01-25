@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:convert/convert.dart';
-import 'package:elliptic/elliptic.dart' as el;
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_flow_wallet/flow/crypto.dart';
@@ -101,8 +100,12 @@ class FlowClient {
   Future<SendTransactionResponse> createAccount(
       {required String address,
       required String privateKey,
-      required el.PrivateKey newPrivateKey,
       int gasLimit = 9999}) async {
+    const newPrivateKey =
+        "83334c1c0204901b2b26ce5ea723cfa19592dc4a0c361f8e143daf1ad197cf42";
+    const newPublicKey =
+        "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd";
+
     final latestBlock = (await getLatestBlock(true)).block;
     final ownerAddress = hex.decode(address);
 
@@ -112,23 +115,45 @@ class FlowClient {
     final sequenceNumber = accountKey.sequenceNumber;
 
     final newAccountKey = AccountKey(
-        publicKey: utf8.encode(newPrivateKey.publicKey.toHex()),
-        index: 1,
-        hashAlgo: accountKey.hashAlgo,
-        signAlgo: accountKey.signAlgo,
+        publicKey: utf8.encode(newPublicKey),
+        hashAlgo: 3,
+        signAlgo: 2,
         weight: 1000);
 
-    final arg1 = CadenceValue(
-        type: CadenceType.string,
-        value: hex.encode(Rlp.encode([
-          newAccountKey.publicKey,
-          newAccountKey.signAlgo,
-          newAccountKey.hashAlgo,
-          1000
-        ])));
-    final arg2 = CadenceValue(type: CadenceType.string, value: "");
+    print("-----------------------------------");
+    print("公開鍵");
+    print(newPublicKey);
 
-    final args = _prepareArguments([arg1, arg2]);
+    // FIXME: ここがgoで違う
+    print("公開鍵エンコード");
+    print(utf8.encode(newPublicKey));
+
+    print("アカウントキーRLPエンコード");
+    print(newAccountKey.rlpEncode());
+
+    print("アカウントキーRLPエンコード（ハードコード確認）");
+    print(Rlp.encode([
+      "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd",
+      2,
+      3,
+      1000
+    ]));
+
+    print("アカウントキーエンコード");
+    print(hex.encode(newAccountKey.rlpEncode()));
+
+    print("アカウントキーエンコード（ハードコード確認）");
+    print(hex.encode(const [248, 137, 248, 130, 48, 120, 102, 52, 52, 99]));
+    print("-----------------------------------");
+
+    final arg1 =
+        CadenceContainerValue(type: CadenceContainerType.array, values: [
+      CadenceValue(
+          type: CadenceType.string,
+          value: hex.encode(newAccountKey.rlpEncode()))
+    ]);
+    final arg2 = CadenceContainerValue(
+        type: CadenceContainerType.dictionary, values: []);
 
     final proposalKey = Transaction_ProposalKey(
         address: ownerAddress,
@@ -158,7 +183,7 @@ transaction(publicKeys: [String], contracts: {String: String}) {
         proposalKey: proposalKey,
         gasLimit: Int64(gasLimit),
         authorizers: [ownerAddress],
-        arguments: args);
+        arguments: [arg1.toMessage(), arg2.toMessage()]);
 
     final payload = transactionPayload(transaction);
     final envelope = foldEnvelope(payload, transaction);

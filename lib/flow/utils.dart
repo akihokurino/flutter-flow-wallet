@@ -1,10 +1,6 @@
 import 'package:convert/convert.dart';
 import 'package:rlp/rlp.dart';
 
-T enumFromString<T>(List<T> values, String value) {
-  return values.firstWhere((v) => v.toString().split('.')[1] == value);
-}
-
 Address toAddress(List<int> address) {
   return Address(withZeroPrefix(hex.encode(address)));
 }

@@ -1,6 +1,5 @@
 // @dart=2.9
 
-import 'package:elliptic/elliptic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_flow_wallet/flow/fcl.dart';
@@ -53,12 +52,6 @@ transaction{
   await flowCli.sendTransaction(
       address: defaultAddress, privateKey: defaultPrivateKey, code: code);
 
-  var ec = getP256();
-  var nextPrivateKey = ec.generatePrivateKey();
-  var pub = nextPrivateKey.publicKey;
-
   // await flowCli.createAccount(
-  //     address: defaultAddress,
-  //     privateKey: defaultPrivateKey,
-  //     newPrivateKey: nextPrivateKey);
+  //     address: defaultAddress, privateKey: defaultPrivateKey);
 }

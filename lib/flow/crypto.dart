@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_flow_wallet/flow/fcl.dart';
@@ -27,7 +28,7 @@ Uint8List signData(List<int> input, String privateKey) {
   final digest = hasher.process(Uint8List.fromList(data));
 
   final ECSignature signature = signer.generateSignature(digest) as ECSignature;
-  return signatureToUint8List(signature);
+  return signatureToUInt8List(signature);
 }
 
 class NullSecureRandom extends SecureRandomBase {
@@ -46,7 +47,7 @@ class NullSecureRandom extends SecureRandomBase {
   int nextUint8() => clip8(_nextValue++);
 }
 
-AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> generateRSAkeyPair(
+AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> generateRSAKeyPair(
     SecureRandom secureRandom,
     {int bitLength = 2048}) {
   // Create an RSA key generator and initialize it
@@ -68,7 +69,20 @@ AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> generateRSAkeyPair(
   return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(myPublic, myPrivate);
 }
 
-Uint8List signatureToUint8List(ECSignature signature) {
+SecureRandom secureRandom() {
+  final secureRandom = FortunaRandom();
+
+  final seedSource = Random.secure();
+  final seeds = <int>[];
+  for (int i = 0; i < 32; i++) {
+    seeds.add(seedSource.nextInt(255));
+  }
+  secureRandom.seed(KeyParameter(Uint8List.fromList(seeds)));
+
+  return secureRandom;
+}
+
+Uint8List signatureToUInt8List(ECSignature signature) {
   final r = bigIntToByteData(signature.r, 32).buffer.asUint8List();
   final s = bigIntToByteData(signature.s, 32).buffer.asUint8List();
 
