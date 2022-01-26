@@ -12,20 +12,19 @@ import 'package:rlp/rlp.dart';
 
 const _domainTag = "FLOW-V0.0-transaction";
 
-Uint8List signData(Transaction tx, String privateKey) {
+Uint8List signData(Transaction tx, ECPrivateKey privateKey) {
   List<int> data = [];
   data.insertAll(0, _signPayload(tx));
   data.insertAll(0, utf8.encode(_domainTag.padRight(32, "\x00")));
 
-  var privateParameters = PrivateKeyParameter(ECPrivateKey(
-      BigInt.parse(privateKey, radix: 16), ECDomainParameters('prime256v1')));
-
-  var signer = ECDSASigner();
+  final signer = ECDSASigner();
   signer.reset();
   signer.init(
-      true, ParametersWithRandom(privateParameters, _NullSecureRandom()));
+      true,
+      ParametersWithRandom(
+          PrivateKeyParameter(privateKey), _NullSecureRandom()));
 
-  var hashAlgo = SHA3Digest(256);
+  final hashAlgo = SHA3Digest(256);
   final digest = hashAlgo.process(Uint8List.fromList(data));
 
   final ECSignature signature = signer.generateSignature(digest) as ECSignature;
@@ -92,7 +91,6 @@ Uint8List _signatureToUInt8List(ECSignature signature) {
   final s = _bigIntToByteData(signature.s, 32).buffer.asUint8List();
 
   var result = Uint8List(64);
-
   for (var i = 0; i < 32; i++) {
     result[i] = r[i];
   }

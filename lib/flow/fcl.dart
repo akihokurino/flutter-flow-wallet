@@ -7,6 +7,7 @@ import 'package:flutter_flow_wallet/flow/cadence_types.dart';
 import 'package:flutter_flow_wallet/flow/generated/access/access.pbgrpc.dart';
 import 'package:flutter_flow_wallet/flow/generated/entities/account.pb.dart';
 import 'package:flutter_flow_wallet/flow/generated/entities/transaction.pb.dart';
+import 'package:flutter_flow_wallet/flow/key.dart';
 import 'package:flutter_flow_wallet/flow/transaction.dart';
 import 'package:grpc/grpc.dart';
 import 'package:grpc/grpc_connection_interface.dart';
@@ -53,37 +54,38 @@ class FlowClient {
   }
 
   Future<SendTransactionResponse> sendTransaction(
-      {required String address,
-      required String privateKey,
+      {required String rawAddress,
+      required String rawPrivateKey,
       required String code,
       List<CadenceValue>? arguments,
       int gasLimit = 9999}) async {
-    final args = _prepareArguments(arguments);
+    final address = hex.decode(rawAddress);
+    final privateKey = convertECDSAPrivateKey(rawPrivateKey);
 
-    final latestBlock = (await getLatestBlock(true)).block;
-    final executorAddress = hex.decode(address);
-
-    final account = (await getAccount(address)).account;
+    final block = (await getLatestBlock(true)).block;
+    final account = (await getAccount(rawAddress)).account;
     const keyId = 0;
-    final sequenceNumber = account.keys[keyId].sequenceNumber;
+    final accountKey = account.keys[keyId];
 
     final proposalKey = Transaction_ProposalKey(
-        address: executorAddress,
-        sequenceNumber: Int64(sequenceNumber),
+        address: address,
+        sequenceNumber: Int64(accountKey.sequenceNumber),
         keyId: keyId);
 
+    final args = _prepareArguments(arguments);
+
     final transaction = Transaction(
-        payer: executorAddress,
+        payer: address,
         script: utf8.encode(code),
-        referenceBlockId: latestBlock.id,
+        referenceBlockId: block.id,
         proposalKey: proposalKey,
         gasLimit: Int64(gasLimit),
-        authorizers: [executorAddress],
+        authorizers: [address],
         arguments: args);
 
     final signature = signData(transaction, privateKey);
     final envelopeSignature = Transaction_Signature(
-        address: executorAddress, keyId: keyId, signature: signature);
+        address: address, keyId: keyId, signature: signature);
     transaction.envelopeSignatures.insertAll(0, [envelopeSignature]);
 
     final request = SendTransactionRequest(transaction: transaction);
@@ -91,21 +93,26 @@ class FlowClient {
   }
 
   Future<SendTransactionResponse> createAccount(
-      {required String address,
-      required String privateKey,
+      {required String rawAddress,
+      required String rawPrivateKey,
       int gasLimit = 9999}) async {
     const newPrivateKey =
         "83334c1c0204901b2b26ce5ea723cfa19592dc4a0c361f8e143daf1ad197cf42";
     const newPublicKey =
         "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd";
 
-    final latestBlock = (await getLatestBlock(true)).block;
-    final ownerAddress = hex.decode(address);
+    final address = hex.decode(rawAddress);
+    final privateKey = convertECDSAPrivateKey(rawPrivateKey);
 
-    final account = (await getAccount(address)).account;
+    final block = (await getLatestBlock(true)).block;
+    final account = (await getAccount(rawAddress)).account;
     const keyId = 0;
     final accountKey = account.keys[keyId];
-    final sequenceNumber = accountKey.sequenceNumber;
+
+    final proposalKey = Transaction_ProposalKey(
+        address: address,
+        sequenceNumber: Int64(accountKey.sequenceNumber),
+        keyId: keyId);
 
     final newAccountKey = AccountKey(
         publicKey: utf8.encode(newPublicKey),
@@ -116,16 +123,13 @@ class FlowClient {
     print("-----------------------------------");
     print("公開鍵");
     print(newPublicKey);
-
     // FIXME: ここがgo-sdkと違ってしまう
     // ECDSAの鍵を作ってそれで公開鍵を用意し、署名していく必要がある
     print("公開鍵エンコード");
     print(utf8.encode(newPublicKey));
-
     // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
     print("アカウントキーRLPエンコード");
     print(newAccountKey.rlpEncode());
-
     // go-sdkと一致するのでRLPエンコード自体に問題はなさそう
     print("アカウントキーRLPエンコード（ハードコード確認）");
     print(Rlp.encode([
@@ -134,11 +138,9 @@ class FlowClient {
       3,
       1000
     ]));
-
     // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
     print("アカウントキーエンコード");
     print(hex.encode(newAccountKey.rlpEncode()));
-
     // go-sdkと一致するのでhexエンコード自体に問題はなさそう
     print("アカウントキーエンコード（ハードコード確認）");
     print(hex.encode(const [248, 137, 248, 130, 48, 120, 102, 52, 52, 99]));
@@ -152,11 +154,6 @@ class FlowClient {
     ]);
     final arg2 = CadenceContainerValue(
         type: CadenceContainerType.dictionary, values: []);
-
-    final proposalKey = Transaction_ProposalKey(
-        address: ownerAddress,
-        sequenceNumber: Int64(sequenceNumber),
-        keyId: keyId);
 
     const code = '''
 transaction(publicKeys: [String], contracts: {String: String}) {
@@ -175,17 +172,17 @@ transaction(publicKeys: [String], contracts: {String: String}) {
   ''';
 
     final transaction = Transaction(
-        payer: ownerAddress,
+        payer: address,
         script: utf8.encode(code),
-        referenceBlockId: latestBlock.id,
+        referenceBlockId: block.id,
         proposalKey: proposalKey,
         gasLimit: Int64(gasLimit),
-        authorizers: [ownerAddress],
+        authorizers: [address],
         arguments: [arg1.toMessage(), arg2.toMessage()]);
 
     final signature = signData(transaction, privateKey);
     final envelopeSignature = Transaction_Signature(
-        address: ownerAddress, keyId: keyId, signature: signature);
+        address: address, keyId: keyId, signature: signature);
     transaction.envelopeSignatures.insertAll(0, [envelopeSignature]);
 
     final request = SendTransactionRequest(transaction: transaction);

@@ -6,18 +6,22 @@ import "package:pointycastle/export.dart";
 import "package:pointycastle/key_generators/api.dart";
 
 AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> generateRSAKeyPair(
-    SecureRandom secureRandom,
     {int bitLength = 2048}) {
   final keyGen = RSAKeyGenerator()
     ..init(ParametersWithRandom(
         RSAKeyGeneratorParameters(BigInt.parse('65537'), bitLength, 64),
-        secureRandom));
+        _secureRandom()));
 
   final pair = keyGen.generateKeyPair();
   final myPublic = pair.publicKey as RSAPublicKey;
   final myPrivate = pair.privateKey as RSAPrivateKey;
 
   return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(myPublic, myPrivate);
+}
+
+ECPrivateKey convertECDSAPrivateKey(String from) {
+  return ECPrivateKey(
+      BigInt.parse(from, radix: 16), ECDomainParameters('prime256v1'));
 }
 
 SecureRandom _secureRandom() {
