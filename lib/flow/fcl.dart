@@ -11,7 +11,6 @@ import 'package:flutter_flow_wallet/flow/key.dart';
 import 'package:flutter_flow_wallet/flow/transaction.dart';
 import 'package:grpc/grpc.dart';
 import 'package:grpc/grpc_connection_interface.dart';
-import 'package:rlp/rlp.dart';
 
 class FlowClient {
   String endPoint;
@@ -96,11 +95,6 @@ class FlowClient {
       {required String rawAddress,
       required String rawPrivateKey,
       int gasLimit = 9999}) async {
-    const newPrivateKey =
-        "83334c1c0204901b2b26ce5ea723cfa19592dc4a0c361f8e143daf1ad197cf42";
-    const newPublicKey =
-        "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd";
-
     final address = hex.decode(rawAddress);
     final privateKey = convertECDSAPrivateKey(rawPrivateKey);
 
@@ -114,37 +108,16 @@ class FlowClient {
         sequenceNumber: Int64(accountKey.sequenceNumber),
         keyId: keyId);
 
+    final keyPair = generateECDSAKeyPair();
+    final newPrivateKey = keyPair.privateKey;
+    final newPublicKey = keyPair.publicKey;
+
     final newAccountKey = AccountKey(
-        publicKey: utf8.encode(newPublicKey),
+        publicKey: newPublicKey.Q!
+            .getEncoded(false), // FIXME: エンコードがFlowの期待しているものと合わない
         hashAlgo: 3,
         signAlgo: 2,
         weight: 1000);
-
-    print("-----------------------------------");
-    print("公開鍵");
-    print(newPublicKey);
-    // FIXME: ここがgo-sdkと違ってしまう
-    // ECDSAの鍵を作ってそれで公開鍵を用意し、署名していく必要がある
-    print("公開鍵エンコード");
-    print(utf8.encode(newPublicKey));
-    // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
-    print("アカウントキーRLPエンコード");
-    print(newAccountKey.rlpEncode());
-    // go-sdkと一致するのでRLPエンコード自体に問題はなさそう
-    print("アカウントキーRLPエンコード（ハードコード確認）");
-    print(Rlp.encode([
-      "0xf44c3090debfe7e17a6a039c460d816129e569c1366b4de68f23fecf9ad7a7efff7ad0c640b3fa7dbe51fc50ff3d7ea5d1e61f4e4cd7209e6f74df73c0832edd",
-      2,
-      3,
-      1000
-    ]));
-    // FIXME: 公開鍵エンコードに差異があるのでここも違ってしまう
-    print("アカウントキーエンコード");
-    print(hex.encode(newAccountKey.rlpEncode()));
-    // go-sdkと一致するのでhexエンコード自体に問題はなさそう
-    print("アカウントキーエンコード（ハードコード確認）");
-    print(hex.encode(const [248, 137, 248, 130, 48, 120, 102, 52, 52, 99]));
-    print("-----------------------------------");
 
     final arg1 =
         CadenceContainerValue(type: CadenceContainerType.array, values: [
@@ -161,8 +134,8 @@ transaction(publicKeys: [String], contracts: {String: String}) {
 		let acct = AuthAccount(payer: signer)
 
 		for key in publicKeys {
-			acct.addPublicKey(key.decodeHex())
-		}
+      acct.addPublicKey(key.decodeHex())
+    }
 
 		for contract in contracts.keys {
 			acct.contracts.add(name: contract, code: contracts[contract]!.decodeHex())

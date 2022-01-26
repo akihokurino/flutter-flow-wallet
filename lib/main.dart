@@ -52,6 +52,6 @@ transaction{
   await flowCli.sendTransaction(
       rawAddress: defaultAddress, rawPrivateKey: defaultPrivateKey, code: code);
 
-  // await flowCli.createAccount(
-  //     address: defaultAddress, privateKey: defaultPrivateKey);
+  await flowCli.createAccount(
+      rawAddress: defaultAddress, rawPrivateKey: defaultPrivateKey);
 }

@@ -1,38 +1,43 @@
-import 'dart:math';
-import 'dart:typed_data';
-
+import 'package:basic_utils/basic_utils.dart';
 import "package:pointycastle/api.dart";
 import "package:pointycastle/export.dart";
-import "package:pointycastle/key_generators/api.dart";
+import 'package:pointycastle/src/impl/secure_random_base.dart';
+import 'package:pointycastle/src/ufixnum.dart';
 
-AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> generateRSAKeyPair(
+const _curveName = "prime256v1";
+
+AsymmetricKeyPair<ECPublicKey, ECPrivateKey> generateECDSAKeyPair(
     {int bitLength = 2048}) {
-  final keyGen = RSAKeyGenerator()
-    ..init(ParametersWithRandom(
-        RSAKeyGeneratorParameters(BigInt.parse('65537'), bitLength, 64),
-        _secureRandom()));
-
+  final keyGen = ECKeyGenerator();
+  final params = ParametersWithRandom(
+      ECKeyGeneratorParameters(ECDomainParameters(_curveName)),
+      NullSecureRandom());
+  keyGen.init(params);
   final pair = keyGen.generateKeyPair();
-  final myPublic = pair.publicKey as RSAPublicKey;
-  final myPrivate = pair.privateKey as RSAPrivateKey;
+  final publicKey = pair.publicKey as ECPublicKey;
+  final privateKey = pair.privateKey as ECPrivateKey;
 
-  return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(myPublic, myPrivate);
+  return AsymmetricKeyPair<ECPublicKey, ECPrivateKey>(publicKey, privateKey);
 }
 
 ECPrivateKey convertECDSAPrivateKey(String from) {
   return ECPrivateKey(
-      BigInt.parse(from, radix: 16), ECDomainParameters('prime256v1'));
+      BigInt.parse(from, radix: 16), ECDomainParameters(_curveName));
 }
 
-SecureRandom _secureRandom() {
-  final secureRandom = FortunaRandom();
+ECPublicKey extractECDSAPublicKey(ECPrivateKey key) {
+  return ECPublicKey(key.parameters!.G, ECDomainParameters(_curveName));
+}
 
-  final seedSource = Random.secure();
-  final seeds = <int>[];
-  for (int i = 0; i < 32; i++) {
-    seeds.add(seedSource.nextInt(255));
-  }
-  secureRandom.seed(KeyParameter(Uint8List.fromList(seeds)));
+class NullSecureRandom extends SecureRandomBase {
+  var _nextValue = 0;
 
-  return secureRandom;
+  @override
+  String get algorithmName => 'Null';
+
+  @override
+  void seed(CipherParameters params) {}
+
+  @override
+  int nextUint8() => clip8(_nextValue++);
 }

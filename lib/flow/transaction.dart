@@ -6,9 +6,9 @@ import 'package:flutter_flow_wallet/flow/generated/entities/transaction.pb.dart'
 import "package:pointycastle/api.dart";
 import 'package:pointycastle/digests/sha3.dart';
 import "package:pointycastle/export.dart";
-import 'package:pointycastle/src/impl/secure_random_base.dart';
-import 'package:pointycastle/src/ufixnum.dart';
 import 'package:rlp/rlp.dart';
+
+import 'key.dart';
 
 const _domainTag = "FLOW-V0.0-transaction";
 
@@ -18,11 +18,10 @@ Uint8List signData(Transaction tx, ECPrivateKey privateKey) {
   data.insertAll(0, utf8.encode(_domainTag.padRight(32, "\x00")));
 
   final signer = ECDSASigner();
+  final params =
+      ParametersWithRandom(PrivateKeyParameter(privateKey), NullSecureRandom());
   signer.reset();
-  signer.init(
-      true,
-      ParametersWithRandom(
-          PrivateKeyParameter(privateKey), _NullSecureRandom()));
+  signer.init(true, params);
 
   final hashAlgo = SHA3Digest(256);
   final digest = hashAlgo.process(Uint8List.fromList(data));
@@ -71,19 +70,6 @@ List<dynamic> _transactionPayload(Transaction tx) {
   ];
 
   return payload;
-}
-
-class _NullSecureRandom extends SecureRandomBase {
-  var _nextValue = 0;
-
-  @override
-  String get algorithmName => 'Null';
-
-  @override
-  void seed(CipherParameters params) {}
-
-  @override
-  int nextUint8() => clip8(_nextValue++);
 }
 
 Uint8List _signatureToUInt8List(ECSignature signature) {
