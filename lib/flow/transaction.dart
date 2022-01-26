@@ -23,8 +23,7 @@ Uint8List signData(Transaction tx, ECPrivateKey privateKey) {
   signer.reset();
   signer.init(true, params);
 
-  final hashAlgo = SHA3Digest(256);
-  final digest = hashAlgo.process(Uint8List.fromList(data));
+  final digest = SHA3Digest(256).process(Uint8List.fromList(data));
 
   final ECSignature signature = signer.generateSignature(digest) as ECSignature;
   return _signatureToUInt8List(signature);

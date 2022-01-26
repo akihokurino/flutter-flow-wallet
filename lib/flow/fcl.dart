@@ -113,8 +113,7 @@ class FlowClient {
     final newPublicKey = keyPair.publicKey;
 
     final newAccountKey = AccountKey(
-        publicKey: newPublicKey.Q!
-            .getEncoded(false), // FIXME: エンコードがFlowの期待しているものと合わない
+        publicKey: newPublicKey.Q!.getEncoded(false),
         hashAlgo: 3,
         signAlgo: 2,
         weight: 1000);
