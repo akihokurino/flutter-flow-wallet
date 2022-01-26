@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:convert/convert.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter_flow_wallet/flow/crypto.dart';
-import 'package:flutter_flow_wallet/flow/encode.dart';
+import 'package:flutter_flow_wallet/flow/account.dart';
+import 'package:flutter_flow_wallet/flow/cadence_types.dart';
 import 'package:flutter_flow_wallet/flow/generated/access/access.pbgrpc.dart';
 import 'package:flutter_flow_wallet/flow/generated/entities/account.pb.dart';
 import 'package:flutter_flow_wallet/flow/generated/entities/transaction.pb.dart';
-import 'package:flutter_flow_wallet/flow/types.dart';
+import 'package:flutter_flow_wallet/flow/transaction.dart';
 import 'package:grpc/grpc.dart';
 import 'package:grpc/grpc_connection_interface.dart';
 import 'package:rlp/rlp.dart';
@@ -20,7 +20,6 @@ class FlowClient {
 
   static const String flowEmulatorEndpoint = '127.0.0.1';
   static const int flowEmulatorPort = 3569;
-  static const String domainTag = "FLOW-V0.0-transaction";
 
   static FlowClient create(String endPoint, int port) {
     final channel = ClientChannel(
@@ -82,14 +81,10 @@ class FlowClient {
         authorizers: [executorAddress],
         arguments: args);
 
-    final payload = transactionPayload(transaction);
-    final envelope = foldEnvelope(payload, transaction);
+    final signature = signData(transaction, privateKey);
     final envelopeSignature = Transaction_Signature(
-        address: executorAddress,
-        keyId: keyId,
-        signature: signData(envelope, privateKey));
-    final envelopeSignatures = [envelopeSignature];
-    transaction.envelopeSignatures.insertAll(0, envelopeSignatures);
+        address: executorAddress, keyId: keyId, signature: signature);
+    transaction.envelopeSignatures.insertAll(0, [envelopeSignature]);
 
     final request = SendTransactionRequest(transaction: transaction);
     return accessClient.sendTransaction(request);
@@ -188,14 +183,10 @@ transaction(publicKeys: [String], contracts: {String: String}) {
         authorizers: [ownerAddress],
         arguments: [arg1.toMessage(), arg2.toMessage()]);
 
-    final payload = transactionPayload(transaction);
-    final envelope = foldEnvelope(payload, transaction);
+    final signature = signData(transaction, privateKey);
     final envelopeSignature = Transaction_Signature(
-        address: ownerAddress,
-        keyId: keyId,
-        signature: signData(envelope, privateKey));
-    final envelopeSignatures = [envelopeSignature];
-    transaction.envelopeSignatures.insertAll(0, envelopeSignatures);
+        address: ownerAddress, keyId: keyId, signature: signature);
+    transaction.envelopeSignatures.insertAll(0, [envelopeSignature]);
 
     final request = SendTransactionRequest(transaction: transaction);
     return accessClient.sendTransaction(request);
