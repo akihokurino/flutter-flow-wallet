@@ -6,7 +6,7 @@
 - flow ( https://ja.onflow.org/ )
 - flow-dart-sdk ( https://github.com/MaxStalker/flow-dart-sdk )
 
-## Dones
+## Done
 
 - generate private key
 - get balance of flow
