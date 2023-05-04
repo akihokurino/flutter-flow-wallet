@@ -1,4 +1,4 @@
-## Specs
+## Used, Dependency
 
 - flutter2
 - dart2.16
@@ -6,7 +6,7 @@
 - flow ( https://ja.onflow.org/ )
 - flow-dart-sdk ( https://github.com/MaxStalker/flow-dart-sdk )
 
-## Done
+## Support
 
 - generate private key
 - get balance of flow
